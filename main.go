@@ -12,15 +12,18 @@ import (
 
 func main() {
 
-	reader := bufio.NewReader(os.Stdin)
-	text, err := reader.ReadString('\n')
-	if err != nil {
-		log.Fatal("read error")
-	}
+	for {
 
-	interpreter := NewInterpreter(text)
-	result := interpreter.Expr()
-	fmt.Println(result)
+		reader := bufio.NewReader(os.Stdin)
+		text, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal("read error")
+		}
+
+		interpreter := NewInterpreter(text)
+		result := interpreter.Expr()
+		fmt.Println(result)
+	}
 
 }
 
@@ -104,29 +107,28 @@ func (interpreter *Interpreter) Eat(tokenType token.Type) {
 	}
 }
 
+func (interpreter *Interpreter) term() int {
+	tok := interpreter.CurToken
+	interpreter.Eat(token.INTEGER)
+	res, _ := strconv.Atoi(tok.Literal)
+	return res
+}
+
 func (interpreter *Interpreter) Expr() (res int) {
-	left := interpreter.NextToken()
-	interpreter.CurToken = left
-	interpreter.Eat(token.INTEGER)
-	op := interpreter.CurToken
-	if op.Type == token.PLUS {
-		interpreter.Eat(token.PLUS)
-
-	} else {
-		interpreter.Eat(token.MINUS)
-
+	interpreter.CurToken = interpreter.NextToken()
+	res = interpreter.term()
+	for interpreter.CurToken.Type == token.MINUS || interpreter.CurToken.Type == token.PLUS {
+		tok := interpreter.CurToken
+		if tok.Type == token.PLUS {
+			interpreter.Eat(token.PLUS)
+			res += interpreter.term()
+		}
+		if tok.Type == token.MINUS {
+			interpreter.Eat(token.MINUS)
+			res -= interpreter.term()
+		}
 	}
-	right := interpreter.CurToken
-	interpreter.Eat(token.INTEGER)
-
-	intl, _ := strconv.Atoi(left.Literal)
-	intr, _ := strconv.Atoi(right.Literal)
-	if op.Type == token.PLUS {
-		res = intl + intr
-	} else {
-		res = intl - intr
-	}
-	return
+	return res
 }
 
 type Interpreter struct {
