@@ -12,7 +12,7 @@ type Lexer struct {
 }
 
 func NewLexer(text string) Lexer {
-	return Lexer{Text: text, Pos: 0, CurChar: 0}
+	return Lexer{Text: text, Pos: 0, CurChar: text[0]}
 }
 
 func (lexer *Lexer) NextToken() token.Token {
@@ -43,6 +43,19 @@ func (lexer *Lexer) NextToken() token.Token {
 			return tok
 		}
 
+		if lexer.CurChar == '*' {
+			tok.Type = token.MUL
+			tok.Literal = "*"
+			lexer.advance()
+			return tok
+		}
+
+		if lexer.CurChar == '/' {
+			tok.Type = token.DIV
+			tok.Literal = "/"
+			lexer.advance()
+			return tok
+		}
 		if lexer.CurChar == 0 {
 			tok.Type = token.EOF
 			tok.Literal = ""

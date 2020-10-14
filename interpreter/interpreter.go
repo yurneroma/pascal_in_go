@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"fmt"
 	"log"
 	"pascal_in_go/lexer"
 	"pascal_in_go/token"
@@ -14,6 +15,7 @@ type Interpreter struct {
 
 func NewInterpreter(lexer lexer.Lexer) *Interpreter {
 	tok := lexer.NextToken()
+	fmt.Println("initial token", tok)
 	return &Interpreter{Lexer: lexer, CurToken: tok}
 }
 
@@ -21,29 +23,27 @@ func (interpreter *Interpreter) Eat(tokenType token.Type) {
 	if interpreter.CurToken.Type == tokenType {
 		interpreter.CurToken = interpreter.Lexer.NextToken()
 	} else {
-		log.Fatal("type not match, cur and input type is ", interpreter.CurToken.Type, ":", tokenType)
+		log.Fatal("type not match, cur and input  is ", interpreter.CurToken, ":", tokenType)
 	}
 }
 
-func (interpreter *Interpreter) term() int {
+func (interpreter *Interpreter) factor() int {
 	tok := interpreter.CurToken
 	interpreter.Eat(token.INTEGER)
 	res, _ := strconv.Atoi(tok.Literal)
 	return res
 }
-
 func (interpreter *Interpreter) Expr() (res int) {
-	interpreter.CurToken = interpreter.Lexer.NextToken()
-	res = interpreter.term()
-	for interpreter.CurToken.Type == token.MINUS || interpreter.CurToken.Type == token.PLUS {
+	res = interpreter.factor()
+	for interpreter.CurToken.Type == token.DIV || interpreter.CurToken.Type == token.MUL {
 		tok := interpreter.CurToken
-		if tok.Type == token.PLUS {
-			interpreter.Eat(token.PLUS)
-			res += interpreter.term()
+		if tok.Type == token.MUL {
+			interpreter.Eat(token.MUL)
+			res *= interpreter.factor()
 		}
-		if tok.Type == token.MINUS {
-			interpreter.Eat(token.MINUS)
-			res -= interpreter.term()
+		if tok.Type == token.DIV {
+			interpreter.Eat(token.DIV)
+			res /= interpreter.factor()
 		}
 	}
 	return res
