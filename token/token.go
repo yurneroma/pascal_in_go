@@ -7,6 +7,8 @@ const (
 	DIV     = "DIV"
 	MUL     = "MUL"
 	EOF     = "EOF"
+	LPAREN  = "LPAREN"
+	RPAREN  = "RPAREN"
 	ILLEGAL = "ILLEGAL"
 )
 

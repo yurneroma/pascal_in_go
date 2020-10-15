@@ -21,7 +21,7 @@ func NewInterpreter(lexer lexer.Lexer) *Interpreter {
 
 // eat function compare the current token type with the passed token
 // type and if they match then "eat" the current token
-// and assign the next token to the self.current_token,
+// and assign the next token to the  interpreter's current_token,
 // otherwise raise an exception.
 func (interpreter *Interpreter) eat(tokenType token.Type) {
 	if interpreter.CurToken.Type == tokenType {
@@ -31,11 +31,22 @@ func (interpreter *Interpreter) eat(tokenType token.Type) {
 	}
 }
 
-func (interpreter *Interpreter) factor() int {
+func (interpreter *Interpreter) factor() (res int) {
 	tok := interpreter.CurToken
-	interpreter.eat(token.INTEGER)
-	res, _ := strconv.Atoi(tok.Literal)
-	return res
+	if tok.Type == token.INTEGER {
+		interpreter.eat(token.INTEGER)
+		res, _ = strconv.Atoi(tok.Literal)
+		return
+	}
+
+	if tok.Type == token.LPAREN {
+		interpreter.eat(token.LPAREN)
+		res = interpreter.Expr()
+		interpreter.eat(token.RPAREN)
+		return
+	}
+
+	return
 }
 
 func (interpreter *Interpreter) term() (res int) {
@@ -62,7 +73,7 @@ func (interpreter *Interpreter) Expr() (res int) {
 	// calc > 1 + 9 * 2 - 6 / 3
 	// expr :  term ((PLUS | MINUS) term )*
 	// term :  factor ((MUL | DIV) factor )*
-	// factor : INTEGER
+	// factor : INTEGER | Lparenthesized  expr  Rparenthesized
 
 	res = interpreter.term()
 	for interpreter.CurToken.Type == token.PLUS || interpreter.CurToken.Type == token.MINUS {

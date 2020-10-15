@@ -56,6 +56,20 @@ func (lexer *Lexer) NextToken() token.Token {
 			lexer.advance()
 			return tok
 		}
+
+		if lexer.CurChar == '(' {
+			tok.Type = token.LPAREN
+			tok.Literal = "("
+			lexer.advance()
+			return tok
+		}
+
+		if lexer.CurChar == ')' {
+			tok.Type = token.RPAREN
+			tok.Literal = ")"
+			lexer.advance()
+			return tok
+		}
 		if lexer.CurChar == 0 {
 			tok.Type = token.EOF
 			tok.Literal = ""
