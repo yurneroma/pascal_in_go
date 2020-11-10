@@ -1,10 +1,10 @@
 package interpreter
 
 import (
+	"fmt"
 	"log"
 	"pascal_in_go/lexer"
 	"pascal_in_go/token"
-	"strconv"
 )
 
 //Interpreter represents the interpreter struct
@@ -31,61 +31,77 @@ func (interpreter *Interpreter) eat(tokenType token.Type) {
 	}
 }
 
-func (interpreter *Interpreter) factor() (res int) {
+type Node struct {
+	left  *Node
+	right *Node
+	value string
+}
+
+func (interpreter *Interpreter) factor() *Node {
 	tok := interpreter.CurToken
 	if tok.Type == token.INTEGER {
 		interpreter.eat(token.INTEGER)
-		res, _ = strconv.Atoi(tok.Literal)
-		return
+		res := &Node{
+			value: tok.Literal}
+		return res
 	}
 
 	if tok.Type == token.LPAREN {
 		interpreter.eat(token.LPAREN)
-		res = interpreter.Expr()
+		res := interpreter.Expr()
 		interpreter.eat(token.RPAREN)
-		return
+		return res
 	}
 
-	return
+	return nil
 }
 
-func (interpreter *Interpreter) term() (res int) {
+func (interpreter *Interpreter) term() *Node {
 	// context free grammar
 	// term : factor ((MUL|DIV)factor)*
-	res = interpreter.factor()
+	left := interpreter.factor()
 	for interpreter.CurToken.Type == token.DIV || interpreter.CurToken.Type == token.MUL {
 		tok := interpreter.CurToken
 		if tok.Type == token.MUL {
 			interpreter.eat(token.MUL)
-			res *= interpreter.factor()
+			rnode := interpreter.factor()
+			left = &Node{left: left, right: rnode, value: token.MUL}
 		}
+
 		if tok.Type == token.DIV {
 			interpreter.eat(token.DIV)
-			res /= interpreter.factor()
+			rnode := interpreter.factor()
+			left = &Node{left: left, right: rnode, value: token.DIV}
 		}
 	}
-	return res
+	return left
 }
 
 // Expr implements the arithmetic  expression
-func (interpreter *Interpreter) Expr() (res int) {
+func (interpreter *Interpreter) Expr() *Node {
 	// context free grammar
 	// calc > 1 + 9 * 2 - 6 / 3
 	// expr :  term ((PLUS | MINUS) term )*
 	// term :  factor ((MUL | DIV) factor )*
 	// factor : INTEGER | Lparenthesized  expr  Rparenthesized
 
-	res = interpreter.term()
+	left := interpreter.term()
+	fmt.Printf("left is %+v\n", left)
 	for interpreter.CurToken.Type == token.PLUS || interpreter.CurToken.Type == token.MINUS {
 		tok := interpreter.CurToken
+		fmt.Printf("tok is %+v\n", tok)
 		if tok.Type == token.PLUS {
-			interpreter.eat(token.PLUS)
-			res += interpreter.term()
+			rnode := interpreter.term()
+			fmt.Printf("rnode is %+v\n", rnode)
+			left = &Node{left: left, right: rnode, value: token.PLUS}
 		}
 		if tok.Type == token.MINUS {
 			interpreter.eat(token.MINUS)
-			res -= interpreter.term()
+			rnode := interpreter.term()
+			left = &Node{left: left, right: rnode, value: token.MINUS}
 		}
 	}
-	return res
+
+	fmt.Printf("left is %+v\n", left)
+	return left
 }

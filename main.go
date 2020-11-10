@@ -22,7 +22,7 @@ func main() {
 		lexer := lexer.NewLexer(text)
 		interpreter := interpreter.NewInterpreter(lexer)
 		result := interpreter.Expr()
-		fmt.Println(result)
+		fmt.Printf("%+v", result)
 	}
 
 }
