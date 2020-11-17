@@ -8,6 +8,8 @@ import (
 	"strconv"
 )
 
+const INF = 0x3fffffff
+
 //Interpreter represents the interpreter struct
 type Interpreter struct {
 	Lexer    lexer.Lexer `json:"lexer"`
@@ -32,9 +34,14 @@ func (interpreter *Interpreter) eat(tokenType token.Type) {
 	}
 }
 
-type Node struct {
-	left  *Node
-	right *Node
+type BinNode struct {
+	left  Expr
+	right Expr
+	tok   token.Token
+}
+
+type NumNode struct {
+	tok   token.Token
 	value string
 }
 
@@ -44,11 +51,18 @@ type Expr interface {
 
 type Unary struct {
 	Op   string
-	Node Node
+	expr Expr
 }
 
-func (node Node) ToStr() string {
-	return fmt.Sprint(node)
+func (binNode BinNode) ToStr() string {
+	left := fmt.Sprint(binNode.left)
+	right := fmt.Sprint(binNode.right)
+	op := fmt.Sprint(binNode.tok)
+	return fmt.Sprint(left, right, op)
+}
+
+func (numNode NumNode) ToStr() string {
+	return fmt.Sprint(numNode.tok)
 }
 
 func (unary Unary) ToStr() string {
@@ -58,7 +72,8 @@ func (interpreter *Interpreter) factor() Expr {
 	tok := interpreter.CurToken
 	if tok.Type == token.INTEGER {
 		interpreter.eat(token.INTEGER)
-		res := &Node{
+		res := NumNode{
+			tok:   tok,
 			value: tok.Literal}
 		return res
 	}
@@ -72,20 +87,20 @@ func (interpreter *Interpreter) factor() Expr {
 
 	if tok.Type == token.MINUS {
 		interpreter.eat(token.MINUS)
-		binop := interpreter.factor()
-		res := &Unary{
+		expr := interpreter.factor()
+		res := Unary{
 			Op:   token.MINUS,
-			Node: binop.(Node)}
+			expr: expr}
 
 		return res
 	}
 
 	if tok.Type == token.PLUS {
 		interpreter.eat(token.PLUS)
-		binop := interpreter.factor()
-		res := &Unary{
+		expr := interpreter.factor()
+		res := Unary{
 			Op:   token.PLUS,
-			Node: binop.(Node)}
+			expr: expr}
 
 		return res
 	}
@@ -96,19 +111,19 @@ func (interpreter *Interpreter) term() Expr {
 	// context free grammar
 	// calc > 1 + 9 * 2 - 6 / 3
 	// term : factor ((MUL|DIV)factor)*
-	left := interpreter.factor().(Node)
+	left := interpreter.factor()
 	for interpreter.CurToken.Type == token.DIV || interpreter.CurToken.Type == token.MUL {
 		tok := interpreter.CurToken
 		if tok.Type == token.MUL {
 			interpreter.eat(token.MUL)
 			rnode := interpreter.factor()
-			left = &Node{left: &left, right: &rnode, value: token.MUL}
+			left = BinNode{left: left, right: rnode, tok: tok}
 		}
 
 		if tok.Type == token.DIV {
 			interpreter.eat(token.DIV)
 			rnode := interpreter.factor()
-			left = &Node{left: left, right: rnode, value: token.DIV}
+			left = BinNode{left: left, right: rnode, tok: tok}
 		}
 	}
 	return left
@@ -128,16 +143,15 @@ func (interpreter *Interpreter) AstBuild() Expr {
 		if tok.Type == token.PLUS {
 			interpreter.eat(token.PLUS)
 			rnode := interpreter.term()
-			left = &Node{left: left, right: rnode, value: token.PLUS}
+			left = BinNode{left: left, right: rnode, tok: tok}
 		}
 		if tok.Type == token.MINUS {
 			interpreter.eat(token.MINUS)
 			rnode := interpreter.term()
-			left = &Node{left: left, right: rnode, value: token.MINUS}
+			left = BinNode{left: left, right: rnode, tok: tok}
 		}
 	}
 
-	fmt.Printf("tree is %+v\n", left)
 	return left
 }
 
@@ -147,34 +161,47 @@ func (interpreter *Interpreter) Expr() float64 {
 	return ret
 }
 
-func postOrder(ast *Node) float64 {
+func postOrder(ast Expr) float64 {
 	if ast == nil {
 		return 0
 	}
 
-	t := ast.value
-	num, err := strconv.ParseFloat(t, 64)
-	if err == nil {
-		return num
-	}
-	if t == token.PLUS {
-		return postOrder(ast.left) + postOrder(ast.right)
-	}
-	if t == token.MINUS {
-		return postOrder(ast.left) - postOrder(ast.right)
-	}
-
-	if t == token.MUL {
-		return postOrder(ast.left) * postOrder(ast.right)
-	}
-
-	if t == token.DIV {
-
-		if postOrder(ast.right) != 0 {
-			return postOrder(ast.left) / postOrder(ast.right)
+	switch t := ast.(type) {
+	case BinNode:
+		if t.tok.Type == token.PLUS {
+			return postOrder(t.left) + postOrder(t.right)
 		}
 
-	}
+		if t.tok.Type == token.MINUS {
+			return postOrder(t.left) - postOrder(t.right)
+		}
 
+		if t.tok.Type == token.MUL {
+			return postOrder(t.left) * postOrder(t.right)
+		}
+
+		if t.tok.Type == token.DIV {
+			temp := postOrder(t.right)
+			if temp != 0 {
+				return postOrder(t.left) / temp
+			}
+			return INF
+		}
+
+	case Unary:
+		if t.Op == token.PLUS {
+			return postOrder(t.expr)
+		}
+		if t.Op == token.MINUS {
+			return -postOrder(t.expr)
+		}
+
+	case NumNode:
+		num, _ := strconv.ParseFloat(t.tok.Literal, 64)
+		return num
+
+	default:
+		fmt.Println("no match")
+	}
 	return 0
 }
