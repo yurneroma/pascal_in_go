@@ -38,7 +38,23 @@ type Node struct {
 	value string
 }
 
-func (interpreter *Interpreter) factor() *Node {
+type Expr interface {
+	ToStr() string
+}
+
+type Unary struct {
+	Op   string
+	Node Node
+}
+
+func (node Node) ToStr() string {
+	return fmt.Sprint(node)
+}
+
+func (unary Unary) ToStr() string {
+	return fmt.Sprint(unary)
+}
+func (interpreter *Interpreter) factor() Expr {
 	tok := interpreter.CurToken
 	if tok.Type == token.INTEGER {
 		interpreter.eat(token.INTEGER)
@@ -54,19 +70,39 @@ func (interpreter *Interpreter) factor() *Node {
 		return res
 	}
 
+	if tok.Type == token.MINUS {
+		interpreter.eat(token.MINUS)
+		binop := interpreter.factor()
+		res := &Unary{
+			Op:   token.MINUS,
+			Node: binop.(Node)}
+
+		return res
+	}
+
+	if tok.Type == token.PLUS {
+		interpreter.eat(token.PLUS)
+		binop := interpreter.factor()
+		res := &Unary{
+			Op:   token.PLUS,
+			Node: binop.(Node)}
+
+		return res
+	}
 	return nil
 }
 
-func (interpreter *Interpreter) term() *Node {
+func (interpreter *Interpreter) term() Expr {
 	// context free grammar
+	// calc > 1 + 9 * 2 - 6 / 3
 	// term : factor ((MUL|DIV)factor)*
-	left := interpreter.factor()
+	left := interpreter.factor().(Node)
 	for interpreter.CurToken.Type == token.DIV || interpreter.CurToken.Type == token.MUL {
 		tok := interpreter.CurToken
 		if tok.Type == token.MUL {
 			interpreter.eat(token.MUL)
 			rnode := interpreter.factor()
-			left = &Node{left: left, right: rnode, value: token.MUL}
+			left = &Node{left: &left, right: &rnode, value: token.MUL}
 		}
 
 		if tok.Type == token.DIV {
@@ -79,12 +115,12 @@ func (interpreter *Interpreter) term() *Node {
 }
 
 //AstBuild implements the ast tree
-func (interpreter *Interpreter) AstBuild() *Node {
+func (interpreter *Interpreter) AstBuild() Expr {
 	// context free grammar
 	// calc > 1 + 9 * 2 - 6 / 3
 	// expr :  term ((PLUS | MINUS) term )*
 	// term :  factor ((MUL | DIV) factor )*
-	// factor : INTEGER | Lparenthesized  expr  Rparenthesized
+	// factor : (PLUS|MINUS)factor | INTEGER | Lparenthesized  expr  Rparenthesized
 
 	left := interpreter.term()
 	for interpreter.CurToken.Type == token.PLUS || interpreter.CurToken.Type == token.MINUS {
