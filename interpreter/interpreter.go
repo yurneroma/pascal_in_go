@@ -131,11 +131,25 @@ func (interpreter *Interpreter) term() Expr {
 
 //AstBuild implements the ast tree
 func (interpreter *Interpreter) AstBuild() Expr {
-	// context free grammar
-	// calc > 1 + 9 * 2 - 6 / 3
-	// expr :  term ((PLUS | MINUS) term )*
-	// term :  factor ((MUL | DIV) factor )*
-	// factor : (PLUS|MINUS)factor | INTEGER | Lparenthesized  expr  Rparenthesized
+	/* context free grammar
+	program : Compound_statement DOT
+
+	compound_statement :  START   statement_list  END
+
+	statement_list : statement | statement SEMI  statement_list
+
+	statement :  compound_statement | assignment  | empty
+
+	assignment :  variable  ASSIGN expr
+
+	expr : term ((PLUS |  MINUS) term )*
+
+	term : factor ((MUL | DIV) factor )*
+
+	factor :  (PLUS | MINUS) factor  | INTEGER | Lparenthesized expr Rparenthesized | variable
+
+	variable :  ID
+	*/
 
 	left := interpreter.term()
 	for interpreter.CurToken.Type == token.PLUS || interpreter.CurToken.Type == token.MINUS {
