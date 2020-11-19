@@ -7,6 +7,7 @@ import (
 	"os"
 	"pascal_in_go/interpreter"
 	"pascal_in_go/lexer"
+	"pascal_in_go/parser"
 )
 
 func main() {
@@ -20,8 +21,9 @@ func main() {
 		}
 
 		lexer := lexer.NewLexer(text)
-		interpreter := interpreter.NewInterpreter(lexer)
-		result := interpreter.Expr()
+		parser := parser.NewParser(lexer)
+		inp := interpreter.NewInterpreter(parser)
+		result := inp.Expr()
 		fmt.Printf("%+v\n", result)
 	}
 
