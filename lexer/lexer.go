@@ -5,6 +5,12 @@ import (
 	"unicode"
 )
 
+//ReservedKey hold the reserved key(内置保留字符)
+var ReservedKey = map[string]token.Token{
+	"BEGIN": token.Token{Type: "BEGIN", Literal: "BEGIN"},
+	"END":   token.Token{Type: "END", Literal: "END"},
+}
+
 type Lexer struct {
 	Text    string `json:"text"`
 	Pos     int    `json:"pos"`
@@ -23,7 +29,12 @@ func (lexer *Lexer) NextToken() token.Token {
 			continue
 		}
 
-		if unicode.IsDigit(rune(lexer.CurChar)) {
+		if lexer.isalpha() {
+			val := lexer.letter()
+			tok = getIdentifier(val)
+			return tok
+		}
+		if lexer.isnum() {
 			val := lexer.integer()
 			tok.Type = token.INTEGER
 			tok.Literal = val
@@ -70,6 +81,22 @@ func (lexer *Lexer) NextToken() token.Token {
 			lexer.advance()
 			return tok
 		}
+
+		if lexer.CurChar == '.' {
+			tok.Type = token.DOT
+			tok.Literal = "."
+			lexer.advance()
+			return tok
+		}
+
+		if lexer.CurChar == ':' && lexer.peek() == '=' {
+			tok.Type = token.ASSIGN
+			tok.Literal = ":="
+			lexer.advance()
+			lexer.advance()
+			return tok
+		}
+
 		if lexer.CurChar == 0 {
 			tok.Type = token.EOF
 			tok.Literal = ""
@@ -80,9 +107,49 @@ func (lexer *Lexer) NextToken() token.Token {
 	return newToken(token.ILLEGAL, lexer.CurChar)
 }
 
+func (lexer *Lexer) isalpha() bool {
+	ch := lexer.CurChar
+	if (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') {
+		return true
+	}
+	return false
+}
+
+func getIdentifier(val string) token.Token {
+	tok, ok := ReservedKey[val]
+	if ok {
+		return tok
+	}
+	return token.Token{
+		Type:    token.ID,
+		Literal: val,
+	}
+}
+
+func (lexer *Lexer) isnum() bool {
+	ch := lexer.CurChar
+	if ch > '0' && ch < '9' {
+		return true
+	}
+	return false
+}
+
 func (lexer *Lexer) integer() string {
 	result := ""
 	for lexer.CurChar != 0 && unicode.IsDigit(rune(lexer.CurChar)) {
+		result += string(lexer.CurChar)
+		lexer.advance()
+	}
+
+	return result
+}
+
+func (lexer *Lexer) letter() string {
+	result := ""
+	result += string(lexer.CurChar)
+	lexer.advance()
+
+	for lexer.CurChar != 0 && (lexer.isalpha() || lexer.isnum()) {
 		result += string(lexer.CurChar)
 		lexer.advance()
 	}
@@ -103,6 +170,17 @@ func (lexer *Lexer) advance() {
 	} else {
 		lexer.CurChar = lexer.Text[lexer.Pos]
 	}
+
+}
+
+func (lexer *Lexer) peek() byte {
+	pos := lexer.Pos + 1
+	var curChar byte = 0
+	if pos < len(lexer.Text)-1 {
+		curChar = lexer.Text[pos]
+	}
+
+	return curChar
 
 }
 
