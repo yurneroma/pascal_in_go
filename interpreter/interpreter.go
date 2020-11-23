@@ -19,6 +19,7 @@ func NewInterpreter(parser *parser.Parser) *Interpreter {
 }
 func (inp *Interpreter) Expr() float64 {
 	astTree := inp.Parser.AstBuild()
+	fmt.Println("asttree: ", astTree.ToStr())
 	ret := postOrder(astTree)
 	return ret
 }
