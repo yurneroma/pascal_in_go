@@ -10,12 +10,12 @@ const (
 	LPAREN  = "LPAREN"
 	RPAREN  = "RPAREN"
 	ILLEGAL = "ILLEGAL"
-	START   = "START"
 	END     = "END"
 	DOT     = "DOT"
 	ASSIGN  = "ASSGIGN"
 	SEMI    = "SEMI"
 	ID      = "ID"
+	BEGIN   = "BEGIN"
 )
 
 //Type represents the type of a token

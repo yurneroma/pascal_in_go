@@ -35,6 +35,11 @@ type Unary struct {
 	Expr Expr
 }
 
+//Statement Node
+type Statement struct {
+	Expr Expr
+}
+
 //ToStr for BinNode
 func (binNode BinNode) ToStr() string {
 	left := fmt.Sprint(binNode.Left)
@@ -56,4 +61,19 @@ func (unary Unary) ToStr() string {
 //ToStr for VarNode
 func (va VarNode) ToStr() string {
 	return fmt.Sprint(va)
+}
+
+//ToStr for statement
+func (st Statement) ToStr() string {
+	return fmt.Sprint(st)
+}
+
+type StatementList []Statement
+
+func (stList StatementList) ToStr() string {
+	return fmt.Sprint(stList)
+}
+
+type AssignStatement struct {
+	Left token.ID
 }

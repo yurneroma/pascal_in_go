@@ -97,12 +97,74 @@ func (parser *Parser) term() ast.Expr {
 	return left
 }
 
+//program : compound_statement DOT
+func (parser *Parser) program() ast.Expr {
+	program := parser.comStatement()
+	parser.eat(token.DOT)
+	return program
+}
+
+//compound_statement :  BEGIN   statement_list  END
+func (parser *Parser) comStatement() ast.Expr {
+	parser.eat(token.BEGIN)
+	comStatement := parser.statementList()
+	parser.eat(token.END)
+	return comStatement
+}
+
+//statement_list : statement | statement SEMI  statement_list
+func (parser *Parser) statementList() ast.Expr {
+	stList := make(ast.StatementList, 0)
+	st := parser.statement()
+	stList = append(stList, st.(ast.Statement))
+	for parser.CurToken.Type == token.SEMI {
+		parser.eat(token.SEMI)
+		res := parser.statement()
+		stList = append(stList, res.(ast.Statement))
+	}
+
+	return stList
+}
+
+//statement func implements the grammar below
+// statement : compound_statement
+//		| assignment_statement
+// 		| empty
+func (parser *Parser) statement() ast.Expr {
+	var st ast.Expr
+	if parser.CurToken.Type == token.BEGIN {
+		st = parser.comStatement()
+	} else if parser.CurToken.Type == token.ID {
+		st = parser.assignmentStatement()
+	} else {
+		st = parser.empty()
+	}
+	return st
+}
+
+//implements assignmentStatement
+func (parser *Parser) assignmentStatement() ast.Expr {
+	left := parser.variable()
+	op := parser.CurToken
+	parser.eat(token.ASSIGN)
+	right := parser.expr()
+	return ast.Assign{
+		Left:  left,
+		Op:    op,
+		Right: op,
+	}
+}
+
+func (parser *Parser) empty() ast.Expr {
+	return nil
+}
+
 //AstBuild implements the ast tree
-func (parser *Parser) AstBuild() ast.Expr {
+func (parser *Parser) expr() ast.Expr {
 	/* context free grammar
 	program : Compound_statement DOT
 
-	compound_statement :  START   statement_list  END
+	compound_statement :  BEGIN   statement_list  END
 
 	statement_list : statement | statement SEMI  statement_list
 
@@ -127,6 +189,7 @@ func (parser *Parser) AstBuild() ast.Expr {
 			rnode := parser.term()
 			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
 		}
+
 		if tok.Type == token.MINUS {
 			parser.eat(token.MINUS)
 			rnode := parser.term()
