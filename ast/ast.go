@@ -68,12 +68,20 @@ func (st Statement) ToStr() string {
 	return fmt.Sprint(st)
 }
 
-type StatementList []Statement
-
-func (stList StatementList) ToStr() string {
-	return fmt.Sprint(stList)
+type AssignStatement struct {
+	Left  VarNode
+	Op    token.Token
+	Right Expr
 }
 
-type AssignStatement struct {
-	Left token.ID
+func (asg AssignStatement) ToStr() string {
+	return fmt.Sprint(asg)
+}
+
+type Compound struct {
+	Children []Expr
+}
+
+func (compound Compound) ToStr() string {
+	return fmt.Sprint(compound)
 }

@@ -47,7 +47,7 @@ func (parser *Parser) factor() ast.Expr {
 
 	if tok.Type == token.LPAREN {
 		parser.eat(token.LPAREN)
-		res := parser.AstBuild()
+		res := parser.expr()
 		parser.eat(token.RPAREN)
 		return res
 	}
@@ -98,7 +98,7 @@ func (parser *Parser) term() ast.Expr {
 }
 
 //program : compound_statement DOT
-func (parser *Parser) program() ast.Expr {
+func (parser *Parser) Program() ast.Expr {
 	program := parser.comStatement()
 	parser.eat(token.DOT)
 	return program
@@ -109,12 +109,18 @@ func (parser *Parser) comStatement() ast.Expr {
 	parser.eat(token.BEGIN)
 	comStatement := parser.statementList()
 	parser.eat(token.END)
-	return comStatement
+
+	root := ast.Compound{}
+	for st := range comStatement {
+		root.Children = append(root.Children, st)
+	}
+	return root
 }
 
-//statement_list : statement | statement SEMI  statement_list
-func (parser *Parser) statementList() ast.Expr {
-	stList := make(ast.StatementList, 0)
+//statement_list : statement
+// 					| statement SEMI  statement_list
+func (parser *Parser) statementList() []ast.Expr {
+	stList := make([]ast.Statement, 0)
 	st := parser.statement()
 	stList = append(stList, st.(ast.Statement))
 	for parser.CurToken.Type == token.SEMI {
@@ -148,10 +154,10 @@ func (parser *Parser) assignmentStatement() ast.Expr {
 	op := parser.CurToken
 	parser.eat(token.ASSIGN)
 	right := parser.expr()
-	return ast.Assign{
-		Left:  left,
+	return ast.AssignStatement{
+		Left:  left.(ast.VarNode),
 		Op:    op,
-		Right: op,
+		Right: right,
 	}
 }
 
