@@ -85,3 +85,9 @@ type Compound struct {
 func (compound Compound) ToStr() string {
 	return fmt.Sprint(compound)
 }
+
+type StatementList []Statement
+
+func (stml StatementList) ToStr() string {
+	return fmt.Sprint(stml)
+}

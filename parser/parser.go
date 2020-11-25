@@ -7,6 +7,26 @@ import (
 	"pascal_in_go/token"
 )
 
+/* context free grammar
+program : Compound_statement DOT
+
+compound_statement :  BEGIN   statement_list  END
+
+statement_list : statement | statement SEMI  statement_list
+
+statement :  compound_statement | assignment  | empty
+
+assignment :  variable  ASSIGN expr
+
+expr : term ((PLUS |  MINUS) term )*
+
+term : factor ((MUL | DIV) factor )*
+
+factor :  (PLUS | MINUS) factor  | INTEGER | Lparenthesized expr Rparenthesized | variable
+
+variable :  ID
+*/
+
 //INF represents the infinity
 const INF = 0x3fffffff
 
@@ -97,30 +117,36 @@ func (parser *Parser) term() ast.Expr {
 	return left
 }
 
-//program : compound_statement DOT
 func (parser *Parser) Program() ast.Expr {
+	/*
+		program : compound_statement DOT
+	*/
 	program := parser.comStatement()
 	parser.eat(token.DOT)
 	return program
 }
 
-//compound_statement :  BEGIN   statement_list  END
 func (parser *Parser) comStatement() ast.Expr {
+	/*
+		compound_statement: BEGIN statement_list END
+	*/
 	parser.eat(token.BEGIN)
 	comStatement := parser.statementList()
 	parser.eat(token.END)
 
 	root := ast.Compound{}
-	for st := range comStatement {
+	for _, st := range comStatement.(ast.StatementList) {
 		root.Children = append(root.Children, st)
 	}
 	return root
 }
 
-//statement_list : statement
-// 					| statement SEMI  statement_list
-func (parser *Parser) statementList() []ast.Expr {
-	stList := make([]ast.Statement, 0)
+func (parser *Parser) statementList() ast.Expr {
+	/*
+		statement_list : statement
+						 | statement SEMI  statement_list
+	*/
+	stList := make(ast.StatementList, 0)
 	st := parser.statement()
 	stList = append(stList, st.(ast.Statement))
 	for parser.CurToken.Type == token.SEMI {
@@ -132,11 +158,12 @@ func (parser *Parser) statementList() []ast.Expr {
 	return stList
 }
 
-//statement func implements the grammar below
-// statement : compound_statement
-//		| assignment_statement
-// 		| empty
 func (parser *Parser) statement() ast.Expr {
+	/*
+	    statement : compound_statement
+	   				| assignment_statement
+	   		 		| empty
+	*/
 	var st ast.Expr
 	if parser.CurToken.Type == token.BEGIN {
 		st = parser.comStatement()
@@ -165,27 +192,8 @@ func (parser *Parser) empty() ast.Expr {
 	return nil
 }
 
-//AstBuild implements the ast tree
+//expr
 func (parser *Parser) expr() ast.Expr {
-	/* context free grammar
-	program : Compound_statement DOT
-
-	compound_statement :  BEGIN   statement_list  END
-
-	statement_list : statement | statement SEMI  statement_list
-
-	statement :  compound_statement | assignment  | empty
-
-	assignment :  variable  ASSIGN expr
-
-	expr : term ((PLUS |  MINUS) term )*
-
-	term : factor ((MUL | DIV) factor )*
-
-	factor :  (PLUS | MINUS) factor  | INTEGER | Lparenthesized expr Rparenthesized | variable
-
-	variable :  ID
-	*/
 
 	left := parser.term()
 	for parser.CurToken.Type == token.PLUS || parser.CurToken.Type == token.MINUS {
