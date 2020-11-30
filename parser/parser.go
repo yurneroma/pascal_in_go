@@ -135,24 +135,24 @@ func (parser *Parser) comStatement() ast.Expr {
 	parser.eat(token.END)
 
 	root := ast.Compound{}
-	for _, st := range comStatement.(ast.StatementList) {
+	for _, st := range comStatement {
 		root.Children = append(root.Children, st)
 	}
 	return root
 }
 
-func (parser *Parser) statementList() ast.Expr {
+func (parser *Parser) statementList() []ast.Expr {
 	/*
 		statement_list : statement
 						 | statement SEMI  statement_list
 	*/
-	stList := make(ast.StatementList, 0)
+	stList := make([]ast.Expr, 0)
 	st := parser.statement()
-	stList = append(stList, st.(ast.Statement))
+	stList = append(stList, st)
 	for parser.CurToken.Type == token.SEMI {
 		parser.eat(token.SEMI)
 		res := parser.statement()
-		stList = append(stList, res.(ast.Statement))
+		stList = append(stList, res)
 	}
 
 	return stList
@@ -189,12 +189,14 @@ func (parser *Parser) assignmentStatement() ast.Expr {
 }
 
 func (parser *Parser) empty() ast.Expr {
-	return nil
+	return ast.NoOp{}
 }
 
 //expr
 func (parser *Parser) expr() ast.Expr {
-
+	/*
+		expr:  term((PLUS|MINUS)term)*
+	*/
 	left := parser.term()
 	for parser.CurToken.Type == token.PLUS || parser.CurToken.Type == token.MINUS {
 		tok := parser.CurToken

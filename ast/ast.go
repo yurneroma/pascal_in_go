@@ -35,11 +35,6 @@ type Unary struct {
 	Expr Expr
 }
 
-//Statement Node
-type Statement struct {
-	Expr Expr
-}
-
 //ToStr for BinNode
 func (binNode BinNode) ToStr() string {
 	left := fmt.Sprint(binNode.Left)
@@ -63,11 +58,6 @@ func (va VarNode) ToStr() string {
 	return fmt.Sprint(va)
 }
 
-//ToStr for statement
-func (st Statement) ToStr() string {
-	return fmt.Sprint(st)
-}
-
 type AssignStatement struct {
 	Left  VarNode
 	Op    token.Token
@@ -86,8 +76,9 @@ func (compound Compound) ToStr() string {
 	return fmt.Sprint(compound)
 }
 
-type StatementList []Statement
+type NoOp struct {
+}
 
-func (stml StatementList) ToStr() string {
-	return fmt.Sprint(stml)
+func (noop NoOp) ToStr() string {
+	return "noop"
 }

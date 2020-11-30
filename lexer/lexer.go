@@ -1,7 +1,6 @@
 package lexer
 
 import (
-	"fmt"
 	"pascal_in_go/token"
 	"unicode"
 )
@@ -24,7 +23,6 @@ func NewLexer(text string) Lexer {
 
 func (lexer *Lexer) NextToken() token.Token {
 	var tok token.Token
-	fmt.Println("curchar:", string(lexer.CurChar))
 	for lexer.CurChar != 0 {
 		if unicode.IsSpace(rune(lexer.CurChar)) {
 			lexer.skipWhiteSpace()
@@ -32,13 +30,11 @@ func (lexer *Lexer) NextToken() token.Token {
 		}
 
 		if lexer.isalpha() {
-			fmt.Println("alpha", string(lexer.CurChar))
 			val := lexer.letter()
 			tok = getIdentifier(val)
 			return tok
 		}
 		if lexer.isnum() {
-			fmt.Println("isnum", string(lexer.CurChar))
 			val := lexer.integer()
 			tok.Type = token.INTEGER
 			tok.Literal = val
@@ -98,6 +94,12 @@ func (lexer *Lexer) NextToken() token.Token {
 			tok.Literal = ":="
 			lexer.advance()
 			lexer.advance()
+			return tok
+		}
+		if lexer.CurChar == ';' {
+			lexer.advance()
+			tok.Type = token.SEMI
+			tok.Literal = ";"
 			return tok
 		}
 

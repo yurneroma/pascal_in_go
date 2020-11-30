@@ -15,11 +15,11 @@ type Interpreter struct {
 
 func NewInterpreter(parser *parser.Parser) *Interpreter {
 	return &Interpreter{Parser: parser}
-
 }
 func (inp *Interpreter) Expr() float64 {
 	astTree := inp.Parser.Program()
 	ret := postOrder(astTree)
+	fmt.Println(astTree)
 	return ret
 }
 
@@ -62,8 +62,11 @@ func postOrder(astTree ast.Expr) float64 {
 		num, _ := strconv.ParseFloat(t.Tok.Literal, 64)
 		return num
 
+	//todo
+	case ast.AssignStatement:
+		return 0
 	default:
-		fmt.Println("no match")
+		fmt.Println("no match", t)
 	}
 	return 0
 }
