@@ -97,6 +97,14 @@ func (inp *Interpreter) visitVar(node ast.VarNode) float64 {
 	if !ok {
 		return 0
 	}
-	val, _ := strconv.ParseFloat(value.(string), 64)
-	return val
+	switch t := value.(type) {
+	case string:
+		val, _ := strconv.ParseFloat(t, 64)
+		return val
+	case float64:
+		return t
+	default:
+		return 0
+	}
+
 }

@@ -92,6 +92,10 @@ func (parser *Parser) factor() ast.Expr {
 
 		return res
 	}
+	if tok.Type == token.ID {
+		res := parser.variable()
+		return res
+	}
 	return nil
 }
 
@@ -122,7 +126,6 @@ func (parser *Parser) Program() ast.Expr {
 		program : compound_statement DOT
 	*/
 	program := parser.comStatement()
-	log.Printf("program %+v\n", program)
 	parser.eat(token.DOT)
 	return program
 }
@@ -133,7 +136,6 @@ func (parser *Parser) comStatement() ast.Expr {
 	*/
 	parser.eat(token.BEGIN)
 	comStatement := parser.statementList()
-	log.Printf("comStatement is  %+v\n", comStatement)
 	parser.eat(token.END)
 
 	root := ast.Compound{}
@@ -191,6 +193,8 @@ func (parser *Parser) assignmentStatement() ast.Expr {
 }
 
 func (parser *Parser) empty() ast.Expr {
+	// tok := parser.CurToken
+	// for tok.Type ==
 	return ast.NoOp{}
 }
 
