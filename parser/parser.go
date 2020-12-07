@@ -122,6 +122,7 @@ func (parser *Parser) Program() ast.Expr {
 		program : compound_statement DOT
 	*/
 	program := parser.comStatement()
+	log.Printf("program %+v\n", program)
 	parser.eat(token.DOT)
 	return program
 }
@@ -132,6 +133,7 @@ func (parser *Parser) comStatement() ast.Expr {
 	*/
 	parser.eat(token.BEGIN)
 	comStatement := parser.statementList()
+	log.Printf("comStatement is  %+v\n", comStatement)
 	parser.eat(token.END)
 
 	root := ast.Compound{}

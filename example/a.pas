@@ -1,5 +1,5 @@
 BEGIN
-        number := 2;
-	a := number;
+        number := 2; 
+	1+1;
 END.
 
