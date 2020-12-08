@@ -31,7 +31,9 @@ func (inp *Interpreter) visit(astTree ast.Expr) float64 {
 	switch t := astTree.(type) {
 	case ast.BinNode:
 		if t.Tok.Type == token.PLUS {
-			return inp.visit(t.Left) + inp.visit(t.Right)
+			left := inp.visit(t.Left)
+			right := inp.visit(t.Right)
+			return left + right
 		}
 
 		if t.Tok.Type == token.MINUS {
@@ -63,7 +65,7 @@ func (inp *Interpreter) visit(astTree ast.Expr) float64 {
 		return num
 
 	case ast.VarNode:
-		inp.visitVar(t)
+		return inp.visitVar(t)
 	case ast.Compound:
 		inp.visitCompound(t)
 	case ast.AssignStatement:
