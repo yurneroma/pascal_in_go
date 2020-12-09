@@ -17,11 +17,13 @@ func main() {
 		panic(err)
 	}
 	text := string(stream)
+	fmt.Println("origin code: ")
+	fmt.Println("-------------------")
 	fmt.Println(text)
 	lexer := lexer.NewLexer(text)
 	parser := parser.NewParser(lexer)
 	inp := interpreter.NewInterpreter(parser)
 	result := inp.Expr()
-	fmt.Printf("%+v\n", result)
+	fmt.Printf("global variables: %+v\n", result)
 
 }

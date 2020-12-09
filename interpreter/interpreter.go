@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"log"
 	"pascal_in_go/ast"
 	"pascal_in_go/parser"
 	"pascal_in_go/token"
@@ -19,6 +20,7 @@ func NewInterpreter(parser *parser.Parser) *Interpreter {
 }
 func (inp *Interpreter) Expr() map[string]interface{} {
 	astTree := inp.Parser.Program()
+	log.Printf("tree is %+v\n", astTree)
 	inp.visit(astTree)
 	return inp.VarMap
 }
@@ -70,6 +72,8 @@ func (inp *Interpreter) visit(astTree ast.Expr) float64 {
 		inp.visitCompound(t)
 	case ast.AssignStatement:
 		inp.visitAssignment(t)
+	case ast.Statement:
+		inp.visitStatement(t)
 	default:
 		fmt.Println("no match", t)
 	}
@@ -79,14 +83,24 @@ func (inp *Interpreter) visit(astTree ast.Expr) float64 {
 func (inp *Interpreter) visitCompound(t ast.Compound) {
 	for _, child := range t.Children {
 		switch node := child.(type) {
-		case ast.AssignStatement:
-			inp.visitAssignment(node)
+		case ast.Statement:
+			inp.visitStatement(node)
 		case ast.NoOp:
 			return
 		}
 	}
 }
 
+func (inp *Interpreter) visitStatement(t ast.Statement) {
+	switch node := t.Statement.(type) {
+	case ast.AssignStatement:
+		inp.visitAssignment(node)
+	case ast.Compound:
+		inp.visitCompound(node)
+	case ast.NoOp:
+		return
+	}
+}
 func (inp *Interpreter) visitAssignment(st ast.AssignStatement) {
 	varName := st.Left.Value
 	rValue := inp.visit(st.Right)
