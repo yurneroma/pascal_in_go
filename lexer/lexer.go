@@ -7,8 +7,13 @@ import (
 
 //ReservedKey hold the reserved key(内置保留字符)
 var ReservedKey = map[string]token.Token{
-	"BEGIN": token.Token{Type: "BEGIN", Literal: "BEGIN"},
-	"END":   token.Token{Type: "END", Literal: "END"},
+	"BEGIN":   token.Token{Type: "BEGIN", Literal: "BEGIN"},
+	"END":     token.Token{Type: "END", Literal: "END"},
+	"VAR":     token.Token{Type: "VAR", Literal: "VAR"},
+	"DIV":     token.Token{Type: "DIV", Literal: "DIV"},
+	"INTEGER": token.Token{Type: "INTEGER", Literal: "INTEGER"},
+	"REAL":    token.Token{Type: "REAL", Literal: "REAL"},
+	"PROGRAM": token.Token{Type: "PROGRAM", Literal: "PROGRAM"},
 }
 
 type Lexer struct {
@@ -147,8 +152,31 @@ func (lexer *Lexer) integer() string {
 		result += string(lexer.CurChar)
 		lexer.advance()
 	}
-
 	return result
+}
+
+func (lexer *Lexer) number() token.Token {
+	tok := token.Token{}
+	result := ""
+	for lexer.CurChar != 0 && unicode.IsDigit(rune(lexer.CurChar)) {
+		result += string(lexer.CurChar)
+		lexer.advance()
+	}
+
+	tok.Type = token.INTEGER
+	tok.Literal = result
+
+	if lexer.CurChar == '.' {
+		result += "."
+		lexer.advance()
+		for lexer.CurChar != 0 && lexer.isnum() {
+			result += string(lexer.CurChar)
+			lexer.advance()
+		}
+		tok.Literal = result
+		tok.Type = token.REAL
+	}
+	return tok
 }
 
 func (lexer *Lexer) letter() string {

@@ -8,7 +8,15 @@ import (
 )
 
 /* context free grammar
-program : Compound_statement DOT
+program : PROGRAM Variable SEMI block DOT
+
+block : declarations compound_statement
+
+declarations :  VAR(variable_declaration SEMI)+  | empty
+
+variable_declaration : ID(COMMA ID)* COLON type_spec
+
+type_spec : INTEGER | REAL
 
 compound_statement :  BEGIN   statement_list  END
 
@@ -20,9 +28,14 @@ assignment :  variable  ASSIGN expr
 
 expr : term ((PLUS |  MINUS) term )*
 
-term : factor ((MUL | DIV) factor )*
+term : factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor )*
 
-factor :  (PLUS | MINUS) factor  | INTEGER | Lparenthesized expr Rparenthesized | variable
+factor :  PLUS factor
+		| MINUS factor
+		| REAL_CONST
+		| INTEGER_CONST
+		| Lparenthesized expr Rparenthesized
+		| variable
 
 variable :  ID
 */
@@ -55,9 +68,27 @@ func (parser *Parser) eat(tokenType token.Type) {
 }
 
 func (parser *Parser) factor() ast.Expr {
+	/*
+		factor :  PLUS factor
+				| MINUS factor
+				| REAL
+				| INTEGER
+				| Lparenthesized expr Rparenthesized
+				| variable
+
+	*/
 	tok := parser.CurToken
 	if tok.Type == token.INTEGER {
 		parser.eat(token.INTEGER)
+		res := ast.NumNode{
+			Tok:   tok,
+			Value: tok.Literal,
+		}
+		return res
+	}
+
+	if tok.Type == token.REAL {
+		parser.eat(token.REAL)
 		res := ast.NumNode{
 			Tok:   tok,
 			Value: tok.Literal,
@@ -99,26 +130,34 @@ func (parser *Parser) factor() ast.Expr {
 	return nil
 }
 
-func (parser *Parser) term() ast.Expr {
-	// context free grammar
-	// calc > 1 + 9 * 2 - 6 / 3
-	// term : factor ((MUL|DIV)factor)*
-	left := parser.factor()
-	for parser.CurToken.Type == token.DIV || parser.CurToken.Type == token.MUL {
-		tok := parser.CurToken
-		if tok.Type == token.MUL {
-			parser.eat(token.MUL)
-			rnode := parser.factor()
-			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
-		}
-
-		if tok.Type == token.DIV {
-			parser.eat(token.DIV)
-			rnode := parser.factor()
-			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
+func isInSlice(a token.Type, list []token.Type) bool {
+	for _, b := range list {
+		if a == b {
+			return true
 		}
 	}
-	return left
+	return false
+}
+func (parser *Parser) term() ast.Expr {
+	// context free grammar
+	// term : factor ((MUL|INTEGER_DIV | REAL_DIV)factor)*
+	left := parser.factor()
+	curType := parser.CurToken.Type
+	tok := parser.CurToken
+	typeList := []token.Type{token.MUL, token.INTEGER_DIV, token.REAL_DIV}
+	for isInSlice(curType, typeList) {
+		if curType == token.DIV {
+			parser.eat(token.DIV)
+		}
+		if curType == token.INTEGER_DIV {
+			parser.eat(token.INTEGER_DIV)
+		}
+		if curType == token.REAL_DIV {
+			parser.eat(token.REAL_DIV)
+		}
+	}
+
+	return ast.BinNode{Left: left, Right: parser.factor(), Tok: tok}
 }
 
 func (parser *Parser) Program() ast.Expr {
