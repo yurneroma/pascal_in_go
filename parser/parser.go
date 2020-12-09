@@ -168,13 +168,13 @@ func (parser *Parser) statement() ast.Expr {
 	   				| assignment_statement
 	   		 		| empty
 	*/
-	var st ast.Expr
+	var st ast.Statement
 	if parser.CurToken.Type == token.BEGIN {
-		st = parser.comStatement()
+		st.Statement = parser.comStatement()
 	} else if parser.CurToken.Type == token.ID {
-		st = parser.assignmentStatement()
+		st.Statement = parser.assignmentStatement()
 	} else {
-		st = parser.empty()
+		st.Statement = parser.empty()
 	}
 	return st
 }

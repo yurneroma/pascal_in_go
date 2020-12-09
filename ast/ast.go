@@ -76,6 +76,14 @@ func (compound Compound) ToStr() string {
 	return fmt.Sprint(compound)
 }
 
+type Statement struct {
+	Statement Expr
+}
+
+func (st Statement) ToStr() string {
+	return fmt.Sprint(st)
+}
+
 type NoOp struct {
 }
 
