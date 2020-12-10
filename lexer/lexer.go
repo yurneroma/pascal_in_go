@@ -40,9 +40,7 @@ func (lexer *Lexer) NextToken() token.Token {
 			return tok
 		}
 		if lexer.isnum() {
-			val := lexer.integer()
-			tok.Type = token.INTEGER
-			tok.Literal = val
+			tok = lexer.number()
 			return tok
 		}
 		if lexer.CurChar == '+' {

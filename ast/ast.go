@@ -20,8 +20,8 @@ type NumNode struct {
 
 //VarNode represents the Variable node
 type VarNode struct {
-	Tok   token.Token
-	Value string
+	Tok     token.Token
+	Literal string
 }
 
 //Expr interface represent the expr,  expr is the unit for program
@@ -55,7 +55,7 @@ func (unary Unary) ToStr() string {
 
 //ToStr for VarNode
 func (va VarNode) ToStr() string {
-	return fmt.Sprint(va)
+	return va.Literal
 }
 
 type AssignStatement struct {
@@ -89,4 +89,31 @@ type NoOp struct {
 
 func (noop NoOp) ToStr() string {
 	return "noop"
+}
+
+type Program struct {
+	Block Block
+	Name  string
+}
+
+func (prog Program) ToStr() string {
+	return fmt.Sprint(prog)
+}
+
+type Block struct {
+	Decls    []Decl
+	Compound Compound
+}
+
+func (blk Block) ToStr() string {
+	return fmt.Sprint(blk)
+}
+
+type Decl struct {
+	Node VarNode
+	Type string
+}
+
+func (decl *Decl) ToStr() string {
+	return fmt.Sprint(decl)
 }

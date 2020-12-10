@@ -51,8 +51,144 @@ type Parser struct {
 
 // NewParser  init the parser
 func NewParser(lexer lexer.Lexer) *Parser {
-	tok := lexer.NextToken()
-	return &Parser{Lexer: lexer, CurToken: tok}
+	return &Parser{Lexer: lexer, CurToken: lexer.NextToken()}
+}
+
+func (parser *Parser) Program() ast.Expr {
+	/*
+		program : PROGRAM Variable SEMI block DOT
+	*/
+	parser.eat(token.PROGRAM)
+	varNode := parser.variable()
+	name := varNode.ToStr()
+	parser.eat(token.SEMI)
+	block := parser.block()
+	parser.eat(token.DOT)
+	return ast.Program{Block: block, Name: name}
+}
+
+func (parser *Parser) block() ast.Block {
+	//block : declarations compound_statement
+	declarations := parser.declarations()
+	compound := parser.comStatement()
+	return ast.Block{Decls: declarations, Compound: compound}
+}
+
+func (parser *Parser) declarations() []ast.Decl {
+	/*
+		declarations : VAR (variable_declaration SEMI)+
+		               | empty
+	*/
+	decls := make([]ast.Decl, 0)
+	if parser.CurToken.Type == token.VAR {
+		parser.eat(token.VAR)
+		for parser.CurToken.Type == token.ID {
+			varDecls := parser.varDecl()
+			decls = append(decls, varDecls...)
+			parser.eat(token.SEMI)
+		}
+	}
+	return decls
+}
+
+//todo
+func (parser *Parser) varDecl() []ast.Decl {
+	decls := make([]ast.Decl, 0)
+	//todo
+	return decls
+}
+
+func (parser *Parser) comStatement() ast.Compound {
+	/*
+		compound_statement: BEGIN statement_list END
+	*/
+	parser.eat(token.BEGIN)
+	comStatement := parser.statementList()
+	parser.eat(token.END)
+
+	root := ast.Compound{}
+	for _, st := range comStatement {
+		root.Children = append(root.Children, st)
+	}
+	return root
+}
+
+func (parser *Parser) statementList() []ast.Expr {
+	/*
+		statement_list : statement
+						 | statement SEMI  statement_list
+	*/
+
+	stList := make([]ast.Expr, 0)
+	st := parser.statement()
+	stList = append(stList, st)
+	for parser.CurToken.Type == token.SEMI {
+		parser.eat(token.SEMI)
+		res := parser.statement()
+		stList = append(stList, res)
+	}
+
+	return stList
+}
+
+func (parser *Parser) statement() ast.Expr {
+	/*
+	    statement : compound_statement
+	   				| assignment_statement
+	   		 		| empty
+	*/
+	var st ast.Statement
+	if parser.CurToken.Type == token.BEGIN {
+		st.Statement = parser.comStatement()
+	} else if parser.CurToken.Type == token.ID {
+		st.Statement = parser.assignmentStatement()
+	} else {
+		st.Statement = parser.empty()
+	}
+	return st
+}
+
+//implements assignmentStatement
+func (parser *Parser) assignmentStatement() ast.Expr {
+	left := parser.variable()
+	op := parser.CurToken
+	parser.eat(token.ASSIGN)
+	right := parser.expr()
+	return ast.AssignStatement{
+		Left:  left.(ast.VarNode),
+		Op:    op,
+		Right: right,
+	}
+}
+
+func (parser *Parser) empty() ast.Expr {
+	// tok := parser.CurToken
+	// for tok.Type ==
+	return ast.NoOp{}
+}
+
+//expr
+func (parser *Parser) expr() ast.Expr {
+	/*
+		expr:  term((PLUS|MINUS)term)*
+	*/
+	left := parser.term()
+	for parser.CurToken.Type == token.PLUS || parser.CurToken.Type == token.MINUS {
+		tok := parser.CurToken
+		if tok.Type == token.PLUS {
+			parser.eat(token.PLUS)
+			rnode := parser.term()
+			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
+		}
+
+		if tok.Type == token.MINUS {
+			parser.eat(token.MINUS)
+			rnode := parser.term()
+			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
+		}
+	}
+
+	return left
 }
 
 // eat function compare the current token type with the passed token
@@ -140,125 +276,21 @@ func isInSlice(a token.Type, list []token.Type) bool {
 }
 func (parser *Parser) term() ast.Expr {
 	// context free grammar
-	// term : factor ((MUL|INTEGER_DIV | REAL_DIV)factor)*
+	// term : factor ((MUL | DIV)factor)*
 	left := parser.factor()
 	curType := parser.CurToken.Type
 	tok := parser.CurToken
-	typeList := []token.Type{token.MUL, token.INTEGER_DIV, token.REAL_DIV}
+	typeList := []token.Type{token.MUL, token.DIV}
 	for isInSlice(curType, typeList) {
 		if curType == token.DIV {
 			parser.eat(token.DIV)
 		}
-		if curType == token.INTEGER_DIV {
-			parser.eat(token.INTEGER_DIV)
-		}
-		if curType == token.REAL_DIV {
-			parser.eat(token.REAL_DIV)
+		if curType == token.MUL {
+			parser.eat(token.MUL)
 		}
 	}
 
 	return ast.BinNode{Left: left, Right: parser.factor(), Tok: tok}
-}
-
-func (parser *Parser) Program() ast.Expr {
-	/*
-		program : compound_statement DOT
-	*/
-	program := parser.comStatement()
-	parser.eat(token.DOT)
-	return program
-}
-
-func (parser *Parser) comStatement() ast.Expr {
-	/*
-		compound_statement: BEGIN statement_list END
-	*/
-	parser.eat(token.BEGIN)
-	comStatement := parser.statementList()
-	parser.eat(token.END)
-
-	root := ast.Compound{}
-	for _, st := range comStatement {
-		root.Children = append(root.Children, st)
-	}
-	return root
-}
-
-func (parser *Parser) statementList() []ast.Expr {
-	/*
-		statement_list : statement
-						 | statement SEMI  statement_list
-	*/
-	stList := make([]ast.Expr, 0)
-	st := parser.statement()
-	stList = append(stList, st)
-	for parser.CurToken.Type == token.SEMI {
-		parser.eat(token.SEMI)
-		res := parser.statement()
-		stList = append(stList, res)
-	}
-
-	return stList
-}
-
-func (parser *Parser) statement() ast.Expr {
-	/*
-	    statement : compound_statement
-	   				| assignment_statement
-	   		 		| empty
-	*/
-	var st ast.Statement
-	if parser.CurToken.Type == token.BEGIN {
-		st.Statement = parser.comStatement()
-	} else if parser.CurToken.Type == token.ID {
-		st.Statement = parser.assignmentStatement()
-	} else {
-		st.Statement = parser.empty()
-	}
-	return st
-}
-
-//implements assignmentStatement
-func (parser *Parser) assignmentStatement() ast.Expr {
-	left := parser.variable()
-	op := parser.CurToken
-	parser.eat(token.ASSIGN)
-	right := parser.expr()
-	return ast.AssignStatement{
-		Left:  left.(ast.VarNode),
-		Op:    op,
-		Right: right,
-	}
-}
-
-func (parser *Parser) empty() ast.Expr {
-	// tok := parser.CurToken
-	// for tok.Type ==
-	return ast.NoOp{}
-}
-
-//expr
-func (parser *Parser) expr() ast.Expr {
-	/*
-		expr:  term((PLUS|MINUS)term)*
-	*/
-	left := parser.term()
-	for parser.CurToken.Type == token.PLUS || parser.CurToken.Type == token.MINUS {
-		tok := parser.CurToken
-		if tok.Type == token.PLUS {
-			parser.eat(token.PLUS)
-			rnode := parser.term()
-			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
-		}
-
-		if tok.Type == token.MINUS {
-			parser.eat(token.MINUS)
-			rnode := parser.term()
-			left = ast.BinNode{Left: left, Right: rnode, Tok: tok}
-		}
-	}
-
-	return left
 }
 
 func (parser *Parser) variable() ast.Expr {
