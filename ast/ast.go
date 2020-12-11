@@ -111,7 +111,7 @@ func (blk Block) ToStr() string {
 
 type Decl struct {
 	Node VarNode
-	Type string
+	Type token.Type
 }
 
 func (decl *Decl) ToStr() string {

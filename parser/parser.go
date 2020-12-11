@@ -93,9 +93,39 @@ func (parser *Parser) declarations() []ast.Decl {
 
 //todo
 func (parser *Parser) varDecl() []ast.Decl {
+	/*
+		variable_declaration:  ID(COMMA ID)*  COLON type_spec
+	*/
+	varNodes := make([]ast.VarNode, 0)
+	tok := parser.CurToken
+	varNodes = append(varNodes, ast.VarNode{tok, tok.Literal})
+	parser.eat(token.ID)
+
+	for parser.CurToken.Type == token.COMMA {
+		parser.eat(token.COMMA)
+		tok = parser.CurToken
+		varNodes = append(varNodes, ast.VarNode{tok, tok.Literal})
+		parser.eat(token.ID)
+	}
+
+	//todo,semantec check, report error and position
+	parser.eat(token.COLON)
+	typeSpec := parser.typeSpec()
 	decls := make([]ast.Decl, 0)
-	//todo
+	for _, elem := range varNodes {
+		decls = append(decls, ast.Decl{Node: elem, Type: typeSpec})
+	}
+
 	return decls
+}
+func (parser *Parser) typeSpec() token.Type {
+	/*
+		type_spec : INTEGER
+					| REAL
+	*/
+
+	return parser.CurToken.Type
+
 }
 
 func (parser *Parser) comStatement() ast.Compound {
@@ -298,8 +328,8 @@ func (parser *Parser) variable() ast.Expr {
 	if tok.Type == token.ID {
 		parser.eat(token.ID)
 		res := ast.VarNode{
-			Tok:   tok,
-			Value: tok.Literal}
+			Tok:     tok,
+			Literal: tok.Literal}
 		return res
 	}
 	return nil

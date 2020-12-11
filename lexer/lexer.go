@@ -106,6 +106,20 @@ func (lexer *Lexer) NextToken() token.Token {
 			return tok
 		}
 
+		if lexer.CurChar == ':' {
+			lexer.advance()
+			tok.Type = token.COLON
+			tok.Literal = ":"
+			return tok
+		}
+
+		if lexer.CurChar == ',' {
+			lexer.advance()
+			tok.Type = token.COMMA
+			tok.Literal = ","
+			return tok
+		}
+
 		if lexer.CurChar == 0 {
 			tok.Type = token.EOF
 			tok.Literal = ""

@@ -21,6 +21,8 @@ const (
 	BEGIN   = "BEGIN"
 	PROGRAM = "PROGRAM"
 	VAR     = "VAR"
+	COMMA   = "COMMA"
+	COLON   = "COLON"
 )
 
 //Type represents the type of a token
