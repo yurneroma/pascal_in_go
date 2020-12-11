@@ -124,6 +124,12 @@ func (parser *Parser) typeSpec() token.Type {
 					| REAL
 	*/
 
+	if parser.CurToken.Type == token.REAL {
+		parser.eat(token.REAL)
+	}
+	if parser.CurToken.Type == token.INTEGER {
+		parser.eat(token.INTEGER)
+	}
 	return parser.CurToken.Type
 
 }
@@ -229,7 +235,8 @@ func (parser *Parser) eat(tokenType token.Type) {
 	if parser.CurToken.Type == tokenType {
 		parser.CurToken = parser.Lexer.NextToken()
 	} else {
-		log.Fatal("type not match, cur and input  is ", parser.CurToken, ":", tokenType)
+		log.Fatalf("type not match, cur is %+v and input  is %+v , position is %+v, curchar is %+v",
+			parser.CurToken, tokenType, parser.Lexer.Pos, string(parser.Lexer.CurChar))
 	}
 }
 
@@ -308,19 +315,20 @@ func (parser *Parser) term() ast.Expr {
 	// context free grammar
 	// term : factor ((MUL | DIV)factor)*
 	left := parser.factor()
-	curType := parser.CurToken.Type
-	tok := parser.CurToken
-	typeList := []token.Type{token.MUL, token.DIV}
-	for isInSlice(curType, typeList) {
-		if curType == token.DIV {
+	for parser.CurToken.Type == token.MUL || parser.CurToken.Type == token.DIV {
+		tok := parser.CurToken
+		if parser.CurToken.Type == token.DIV {
 			parser.eat(token.DIV)
+			right := parser.factor()
+			left = ast.BinNode{Left: left, Right: right, Tok: tok}
 		}
-		if curType == token.MUL {
+		if parser.CurToken.Type == token.MUL {
 			parser.eat(token.MUL)
+			right := parser.factor()
+			left = ast.BinNode{Left: left, Right: right, Tok: tok}
 		}
 	}
-
-	return ast.BinNode{Left: left, Right: parser.factor(), Tok: tok}
+	return left
 }
 
 func (parser *Parser) variable() ast.Expr {

@@ -21,6 +21,7 @@ func NewInterpreter(parser *parser.Parser) *Interpreter {
 func (inp *Interpreter) Expr() map[string]interface{} {
 	astTree := inp.Parser.Program()
 	log.Printf("tree is %+v\n", astTree)
+	log.Println("-------------------")
 	inp.visit(astTree)
 	return inp.VarMap
 }
@@ -31,29 +32,21 @@ func (inp *Interpreter) visit(astTree ast.Expr) float64 {
 	}
 
 	switch t := astTree.(type) {
+	case ast.Program:
+		inp.visitProgram(t)
+	case ast.Block:
+		inp.visitBlock(t)
+	case ast.Decl:
+		inp.visitDecl(t)
+	case ast.Compound:
+		inp.visitCompound(t)
+	case ast.AssignStatement:
+		inp.visitAssignment(t)
+	case ast.Statement:
+		inp.visitStatement(t)
 	case ast.BinNode:
-		if t.Tok.Type == token.PLUS {
-			left := inp.visit(t.Left)
-			right := inp.visit(t.Right)
-			return left + right
-		}
-
-		if t.Tok.Type == token.MINUS {
-			return inp.visit(t.Left) - inp.visit(t.Right)
-		}
-
-		if t.Tok.Type == token.MUL {
-			return inp.visit(t.Left) * inp.visit(t.Right)
-		}
-
-		if t.Tok.Type == token.DIV {
-			temp := inp.visit(t.Right)
-			if temp != 0 {
-				return inp.visit(t.Left) / temp
-			}
-			return parser.INF
-		}
-
+		res := inp.visitBinNode(t)
+		return res
 	case ast.Unary:
 		if t.Op == token.PLUS {
 			return inp.visit(t.Expr)
@@ -68,17 +61,50 @@ func (inp *Interpreter) visit(astTree ast.Expr) float64 {
 
 	case ast.VarNode:
 		return inp.visitVar(t)
-	case ast.Compound:
-		inp.visitCompound(t)
-	case ast.AssignStatement:
-		inp.visitAssignment(t)
-	case ast.Statement:
-		inp.visitStatement(t)
 	default:
 		fmt.Println("no match", t)
 	}
 	return 0
 }
+
+func (inp *Interpreter) visitBinNode(t ast.BinNode) float64 {
+	if t.Tok.Type == token.PLUS {
+		left := inp.visit(t.Left)
+		right := inp.visit(t.Right)
+		return left + right
+	}
+
+	if t.Tok.Type == token.MINUS {
+		return inp.visit(t.Left) - inp.visit(t.Right)
+	}
+
+	if t.Tok.Type == token.MUL {
+		return inp.visit(t.Left) * inp.visit(t.Right)
+	}
+
+	if t.Tok.Type == token.DIV {
+		temp := inp.visit(t.Right)
+		if temp != 0 {
+			return inp.visit(t.Left) / temp
+		}
+		return parser.INF
+	}
+
+	return 0
+}
+
+func (inp *Interpreter) visitProgram(t ast.Program) {
+	inp.visitBlock(t.Block)
+}
+
+func (inp *Interpreter) visitBlock(t ast.Block) {
+	for _, decl := range t.Decls {
+		inp.visitDecl(decl)
+	}
+	inp.visitCompound(t.Compound)
+}
+
+func (inp *Interpreter) visitDecl(t ast.Decl) {}
 
 func (inp *Interpreter) visitCompound(t ast.Compound) {
 	for _, child := range t.Children {
@@ -102,13 +128,13 @@ func (inp *Interpreter) visitStatement(t ast.Statement) {
 	}
 }
 func (inp *Interpreter) visitAssignment(st ast.AssignStatement) {
-	varName := st.Left.Value
+	varName := st.Left.Literal
 	rValue := inp.visit(st.Right)
 	inp.VarMap[varName] = rValue
 }
 
 func (inp *Interpreter) visitVar(node ast.VarNode) float64 {
-	name := node.Value
+	name := node.Literal
 	value, ok := inp.VarMap[name]
 	if !ok {
 		return 0

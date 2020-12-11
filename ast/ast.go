@@ -114,6 +114,6 @@ type Decl struct {
 	Type token.Type
 }
 
-func (decl *Decl) ToStr() string {
+func (decl Decl) ToStr() string {
 	return fmt.Sprint(decl)
 }
