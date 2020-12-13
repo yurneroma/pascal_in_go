@@ -1,26 +1,55 @@
 # pascal_in_go
-implement pascal  with golang  
+implenment the sub-grammar of pascal with golang   
 
 
-## Grammar
+# Key Features
+- program : PROGRAM Variable SEMI block DOT
 
-program : Compound_statement DOT
+- block : declarations compound_statement
 
-compound_statement :  BEGIN   statement_list  END
+- declarations :  VAR(variable_declaration SEMI)+  | empty
 
-statement_list : statement | statement SEMI  statement_list
+- variable_declaration : ID(COMMA ID)* COLON type_spec
 
-statement :  compound_statement | assignment  | empty
+- type_spec : INTEGER | REAL
 
-assignment :  variable  ASSIGN expr
+- compound_statement :  BEGIN   statement_list  END
 
-expr : term ((PLUS |  MINUS) term )*
+- statement_list : statement | statement SEMI  statement_list
 
-term : factor ((MUL | DIV) factor )*
+- statement :  compound_statement | assignment  | empty
 
-factor :  (PLUS | MINUS) factor  | INTEGER | Lparenthesized expr Rparenthesized | variable
+- assignment :  variable  ASSIGN expr
 
-variable :  ID
+- expr : term ((PLUS |  MINUS) term )*
+
+- term : factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor )*
+
+- factor :  PLUS factor
+		| MINUS factor
+		| REAL_CONST
+		| INTEGER_CONST
+		| Lparenthesized expr Rparenthesized
+		| variable
+
+- variable :  ID
 
 
-## Example
+
+# Quick start
+
+```
+    go build
+    ./pascal_in_go  example/a.pas
+
+```
+
+- output:
+![output](./docs/ishot.png)
+
+# Motivation
+> "What I cannot create I do not understand"
+> -Richard Feyman
+
+this project record my experience and every step  to learn how to build a interpreter or a compiler from scratch 
+use BNF to define the grammar  and LL(k) parser with Recursive descent to implement the pascal 
