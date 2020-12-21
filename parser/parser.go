@@ -91,7 +91,6 @@ func (parser *Parser) declarations() []ast.Decl {
 	return decls
 }
 
-//todo
 func (parser *Parser) varDecl() []ast.Decl {
 	/*
 		variable_declaration:  ID(COMMA ID)*  COLON type_spec
@@ -108,14 +107,12 @@ func (parser *Parser) varDecl() []ast.Decl {
 		parser.eat(token.ID)
 	}
 
-	//todo,semantec check, report error and position
 	parser.eat(token.COLON)
 	typeSpec := parser.typeSpec()
 	decls := make([]ast.Decl, 0)
 	for _, elem := range varNodes {
 		decls = append(decls, ast.Decl{Node: elem, Type: typeSpec})
 	}
-
 	return decls
 }
 func (parser *Parser) typeSpec() token.Type {
@@ -124,13 +121,15 @@ func (parser *Parser) typeSpec() token.Type {
 					| REAL
 	*/
 
+	curType := parser.CurToken.Type
 	if parser.CurToken.Type == token.REAL {
 		parser.eat(token.REAL)
+
 	}
 	if parser.CurToken.Type == token.INTEGER {
 		parser.eat(token.INTEGER)
 	}
-	return parser.CurToken.Type
+	return curType
 
 }
 
