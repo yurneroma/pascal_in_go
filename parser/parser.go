@@ -71,27 +71,44 @@ func (parser *Parser) block() ast.Block {
 	//block : declarations compound_statement
 	declarations := parser.declarations()
 	compound := parser.comStatement()
-	return ast.Block{Decls: declarations, Compound: compound}
+	return ast.Block{Decl: declarations, Compound: compound}
 }
 
-func (parser *Parser) declarations() []ast.Decl {
+func (parser *Parser) declarations() ast.Decl {
 	/*
 		declarations : VAR (variable_declaration SEMI)+
+						| (PROCEDURE ID SEMI block SEMI)*
 		               | empty
 	*/
-	decls := make([]ast.Decl, 0)
+	decls := ast.Decl{}
+	vardecls := make([]ast.VarDecl, 0)
 	if parser.CurToken.Type == token.VAR {
 		parser.eat(token.VAR)
 		for parser.CurToken.Type == token.ID {
 			varDecls := parser.varDecl()
-			decls = append(decls, varDecls...)
+			vardecls = append(vardecls, varDecls...)
 			parser.eat(token.SEMI)
 		}
 	}
+	decls.VarDeclList = vardecls
+
+	procedureList := make([]ast.Procedure, 0)
+	for parser.CurToken.Type == token.PROCEDURE {
+		parser.eat(token.PROCEDURE)
+		procedName := parser.CurToken.Literal
+		parser.eat(token.ID)
+		parser.eat(token.SEMI)
+		block := parser.block()
+		procedure := ast.Procedure{Name: procedName, Block: block}
+		procedureList = append(procedureList, procedure)
+		parser.eat(token.SEMI)
+
+	}
+	decls.ProceDeclList = procedureList
 	return decls
 }
 
-func (parser *Parser) varDecl() []ast.Decl {
+func (parser *Parser) varDecl() []ast.VarDecl {
 	/*
 		variable_declaration:  ID(COMMA ID)*  COLON type_spec
 	*/
@@ -109,9 +126,9 @@ func (parser *Parser) varDecl() []ast.Decl {
 
 	parser.eat(token.COLON)
 	typeSpec := parser.typeSpec()
-	decls := make([]ast.Decl, 0)
+	decls := make([]ast.VarDecl, 0)
 	for _, elem := range varNodes {
-		decls = append(decls, ast.Decl{Node: elem, Type: typeSpec})
+		decls = append(decls, ast.VarDecl{Node: elem, Type: typeSpec})
 	}
 	return decls
 }

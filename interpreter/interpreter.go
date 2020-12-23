@@ -98,13 +98,14 @@ func (inp *Interpreter) visitProgram(t ast.Program) {
 }
 
 func (inp *Interpreter) visitBlock(t ast.Block) {
-	for _, decl := range t.Decls {
-		inp.visitDecl(decl)
+	for _, vardecl := range t.Decl.VarDeclList {
+		inp.visitVarDecl(vardecl)
 	}
 	inp.visitCompound(t.Compound)
 }
 
-func (inp *Interpreter) visitDecl(t ast.Decl) {}
+func (inp *Interpreter) visitVarDecl(t ast.VarDecl) {}
+func (inp *Interpreter) visitDecl(t ast.Decl)       {}
 
 func (inp *Interpreter) visitCompound(t ast.Compound) {
 	for _, child := range t.Children {

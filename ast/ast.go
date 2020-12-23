@@ -101,7 +101,7 @@ func (prog Program) ToStr() string {
 }
 
 type Block struct {
-	Decls    []Decl
+	Decl     Decl
 	Compound Compound
 }
 
@@ -110,10 +110,28 @@ func (blk Block) ToStr() string {
 }
 
 type Decl struct {
-	Node VarNode
-	Type token.Type
+	VarDeclList   []VarDecl
+	ProceDeclList []Procedure
 }
 
 func (decl Decl) ToStr() string {
 	return fmt.Sprint(decl)
+}
+
+type VarDecl struct {
+	Node VarNode
+	Type token.Type
+}
+
+func (vardecl VarDecl) ToStr() string {
+	return fmt.Sprint(vardecl)
+}
+
+type Procedure struct {
+	Name  string
+	Block Block
+}
+
+func (procedure Procedure) ToStr() string {
+	return fmt.Sprint(procedure)
 }

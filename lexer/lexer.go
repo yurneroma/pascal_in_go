@@ -7,13 +7,14 @@ import (
 
 //ReservedKey hold the reserved key(内置保留字符)
 var ReservedKey = map[string]token.Token{
-	"BEGIN":   token.Token{Type: "BEGIN", Literal: "BEGIN"},
-	"END":     token.Token{Type: "END", Literal: "END"},
-	"VAR":     token.Token{Type: "VAR", Literal: "VAR"},
-	"DIV":     token.Token{Type: "DIV", Literal: "DIV"},
-	"INTEGER": token.Token{Type: "INTEGER", Literal: "INTEGER"},
-	"REAL":    token.Token{Type: "REAL", Literal: "REAL"},
-	"PROGRAM": token.Token{Type: "PROGRAM", Literal: "PROGRAM"},
+	"BEGIN":     token.Token{Type: "BEGIN", Literal: "BEGIN"},
+	"END":       token.Token{Type: "END", Literal: "END"},
+	"VAR":       token.Token{Type: "VAR", Literal: "VAR"},
+	"DIV":       token.Token{Type: "DIV", Literal: "DIV"},
+	"INTEGER":   token.Token{Type: "INTEGER", Literal: "INTEGER"},
+	"REAL":      token.Token{Type: "REAL", Literal: "REAL"},
+	"PROGRAM":   token.Token{Type: "PROGRAM", Literal: "PROGRAM"},
+	"PROCEDURE": token.Token{Type: "PROCEDURE", Literal: "PROCEDURE"},
 }
 
 type Lexer struct {

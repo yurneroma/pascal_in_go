@@ -42,7 +42,13 @@ type SymbolTable struct {
 }
 
 func (symtab *SymbolTable) define(symbol Symbol) {
-	fmt.Println("symbol is: ", symbol)
+	switch t := symbol.(type) {
+	case BuiltinTypeSymbol:
+		fmt.Printf("BuiltinSymbol : %+v\n", t)
+	case VarSymbol:
+		fmt.Printf("VarSymbol : %+v\n", t)
+
+	}
 	name := symbol.ShowName()
 	symtab.Symbols[name] = symbol
 }
@@ -63,16 +69,27 @@ func (symtab *SymbolTable) visitProgram(t ast.Program) {
 }
 
 func (symtab *SymbolTable) visitBlock(t ast.Block) {
-	for _, decl := range t.Decls {
-		symtab.visitDecl(decl)
+	for _, vardecl := range t.Decl.VarDeclList {
+		symtab.visitVarDecl(vardecl)
 	}
+
+	// for _, procedureDecl := range t.Decl.ProceDeclList {
+	// 	//todo
+	// }
 	symtab.visitCompound(t.Compound)
 }
 
-func (symtab *SymbolTable) visitDecl(t ast.Decl) {
+func (symtab *SymbolTable) visitVarDecl(t ast.VarDecl) {
 	typeName := string(t.Type)
 	varName := t.Node.Literal
 	varSymbol := VarSymbol{Type: typeName, Name: varName}
+	symbol := symtab.lookup(varName)
+	if symbol != nil {
+		msg := fmt.Sprintf("Duplicate  identifier %s", varName)
+		err := errors.New(msg)
+		symtab.addError(err)
+		return
+	}
 	symtab.define(varSymbol)
 }
 
@@ -98,7 +115,6 @@ func (symtab *SymbolTable) visitStatement(t ast.Statement) {
 	}
 }
 
-//TODO , empty interface   == nil ?
 func (symtab *SymbolTable) visitAssignment(st ast.AssignStatement) {
 	varName := st.Left.Literal
 	res := symtab.lookup(varName)
@@ -144,6 +160,9 @@ func (symtab *SymbolTable) Visit(astTree ast.Expr) {
 
 	case ast.VarNode:
 		symtab.visitVar(t)
+	case ast.Procedure:
+		symtab.visitProcedure(t)
+
 	default:
 		fmt.Println("no match", t)
 	}
@@ -163,4 +182,12 @@ func (symtab *SymbolTable) visitVar(t ast.VarNode) {
 		symtab.addError(err)
 		return
 	}
+}
+
+func (symtab *SymbolTable) visitProcedure(t ast.Procedure) {
+	return
+}
+
+func (symtab *SymbolTable) visitDecl(t ast.Decl) {
+
 }

@@ -1,6 +1,7 @@
 PROGRAM nameerror1;
     VAR
-        a :INTEGER;
+        x, y :INTEGER;
+        y : REAL;
 BEGIN
-    a := 2+b;
+    x := 2 + b;
 END.
